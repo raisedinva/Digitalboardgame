@@ -1,0 +1,8 @@
+{
+  "name": "digitalboardgame",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "tsc --project tsconfig.json && node dist/game/tests/basic.test.js"
+  }
+}
