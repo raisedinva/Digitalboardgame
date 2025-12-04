@@ -137,6 +137,8 @@ interface SeaCard {
   move: number;       // positive or negative
   damage: number;     // 0 or 1 usually
   endTurn?: boolean;
+  advanceToNextEpic?: boolean; // jump without triggering epic effect
+  skipEpicEffect?: boolean;    // reserved flag to clarify no landing trigger
 }
 
 4.5 PlayerState
@@ -147,6 +149,8 @@ interface PlayerState {
   skipNextTurn: boolean;
   stuckAtCyclops: boolean;
   sirensActive: boolean;
+  circeJumpPending?: boolean;
+  sirensPeekPending?: boolean;
 }
 
 4.6 GameState
@@ -310,6 +314,8 @@ Trigger that tile
 
 Continue the turn normally
 
+State detail: set circeJumpPending=true when landing; resolve the jump at the start of that player's next active turn before assigning actionsRemaining
+
 6.7 Underworld
 
 Move back 1 tile (trigger effect)
@@ -324,7 +330,7 @@ On next turn:
 Must take all 5 actions
 After completing that turn without shipwreck:
 
-Peek at next Epic tile
+Set sirensPeekPending=true; use resolveSirensPeek to reveal the next Epic tile (or Ithaca) ahead, extending path as needed
 
 6.9 Sun God’s Cattle
 
@@ -374,7 +380,17 @@ Sea cards never form a hand
 
 Draw → resolve → discard
 
-If deck is empty → draw_card is not allowed
+If draw is attempted while deck is empty but the discard pile has cards → reshuffle discard to refresh the deck, then draw
+
+If deck and discard are empty → draw_card is not allowed
+
+Special sea card: Charted Course
+
+advanceToNextEpic=true, skipEpicEffect=true
+
+Move the current player directly to the next Epic tile ahead (or Ithaca)
+
+Do not trigger the destination tile effect
 
 Game ends when deck exhausted AND after equal turn counts
 
