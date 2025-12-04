@@ -312,6 +312,8 @@ export const movePlayerStep = (
 
 export const applyMove = (state: GameState, move: Move): GameState => {
   if (state.gameEnded) return state;
+  const cost = getMoveCost(move.name);
+  if (state.actionsRemaining < cost) return state;
   const player = state.players[state.currentPlayer];
   let working = state;
   switch (move.name) {
@@ -356,8 +358,7 @@ export const applyMove = (state: GameState, move: Move): GameState => {
     default:
       return working;
   }
-  const cost = getMoveCost(move.name);
-  const remaining = Math.max(0, working.actionsRemaining - cost);
+  const remaining = working.actionsRemaining - cost;
   let updated: GameState = { ...working, actionsRemaining: remaining };
   const current = updated.players[updated.currentPlayer];
   if (current.sirensActive && remaining === 0) {
@@ -377,12 +378,19 @@ export const getLegalMoves = (state: GameState): readonly MoveName[] => {
   if (state.gameEnded) return [];
   const player = state.players[state.currentPlayer];
   const legal: MoveName[] = [];
-  if (state.seaDeck.length > 0) {
+  if (
+    state.actionsRemaining >= getMoveCost("draw_card") &&
+    (state.seaDeck.length > 0 || state.seaDiscard.length > 0)
+  ) {
     legal.push("draw_card");
   }
-  legal.push("repair");
-  legal.push("careful_sail_1");
-  if (player.damage === 0) {
+  if (state.actionsRemaining >= getMoveCost("repair")) {
+    legal.push("repair");
+  }
+  if (state.actionsRemaining >= getMoveCost("careful_sail_1")) {
+    legal.push("careful_sail_1");
+  }
+  if (player.damage === 0 && state.actionsRemaining >= getMoveCost("careful_sail_2")) {
     legal.push("careful_sail_2");
   }
   const mustActAll = player.sirensActive && state.actionsRemaining > 0;

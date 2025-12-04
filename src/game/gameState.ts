@@ -16,6 +16,9 @@ export const createPlayers = (count: number): readonly PlayerState[] =>
   }));
 
 export const createGameState = (playerCount: number, seed = 1): GameState => {
+  if (playerCount < 2 || playerCount > 4) {
+    throw new Error("playerCount must be between 2 and 4 inclusive");
+  }
   const rng = createRNG(seed);
   return {
     players: createPlayers(playerCount),

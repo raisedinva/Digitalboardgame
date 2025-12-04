@@ -1,0 +1,35 @@
+Digitalboardgame launch and UI audit notes
+==========================================
+
+Environment prerequisites
+-------------------------
+- Node.js 18+ and npm are recommended. There are currently no third-party runtime dependencies.
+
+Getting the code ready
+----------------------
+1) Install dependencies (creates a package-lock for reproducibility):
+   npm install
+2) Build and run the automated checks (compiles TypeScript to dist/ and executes the test suite):
+   npm test -- --runInBand
+
+Running the game engine
+-----------------------
+- To exercise the logic manually, import the compiled engine helpers from dist/game/engine.js or the TypeScript sources directly via ts-node/tsx. Key exports include:
+  - startGame(playerCount, seed?) to create a new GameState
+  - startTurn(state), legalMoves(state), performMove(state, move), and endTurn(state) to drive turn flow
+- You can script a short Node.js session to simulate a turn cycle and inspect the resulting GameState objects.
+
+UI demo for audits
+------------------
+- A deterministic, text-based auditing UI is included under src/ui.
+- Build and run the demo to print a turn snapshot:
+  npm run ui:demo
+- The output summarizes current player context, actions, deck counts, player status, the visible path, and legal moves pulled from the engine.
+
+UI command and projection layer
+-------------------------------
+- The UI interaction contract lives under src/ui and exposes engine-friendly helpers:
+  - gameEngineApi.initGame(playerNames) to construct a GameState for the provided roster size.
+  - gameEngineApi.getView(state) to derive a GameView projection of the board, tokens, epics, and endgame info without mutating state.
+  - gameEngineApi.getLegalCommands(state, playerId) to surface UiCommand objects for the active player, including Aeolus resolution choices.
+  - gameEngineApi.applyCommand(state, command) to route UiCommand inputs back into the game reducers without changing gameplay rules.
