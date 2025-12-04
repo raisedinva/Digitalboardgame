@@ -7,7 +7,12 @@ export type UiCommand =
   | {
       readonly type: "CHOOSE_CORE_ACTION";
       readonly playerId: PlayerId;
-      readonly action: "DRAW_SEA_CARD" | "REPAIR_SHIP" | "END_TURN";
+      readonly action:
+        | "DRAW_SEA_CARD"
+        | "REPAIR_SHIP"
+        | "CAREFUL_SAIL_1"
+        | "CAREFUL_SAIL_2"
+        | "END_TURN";
     }
   | {
       readonly type: "RESOLVE_AEOLUS_MOVE";

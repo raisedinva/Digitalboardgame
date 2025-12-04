@@ -12,6 +12,10 @@ const mapMove = (action: CoreActionCommand): MoveName => {
       return "draw_card";
     case "REPAIR_SHIP":
       return "repair";
+    case "CAREFUL_SAIL_1":
+      return "careful_sail_1";
+    case "CAREFUL_SAIL_2":
+      return "careful_sail_2";
     case "END_TURN":
     default:
       return "end_turn";
@@ -37,6 +41,12 @@ const filterCommandsForPlayer = (state: GameState, playerId: PlayerId, view: Gam
   }
   if (moves.includes("repair")) {
     legal.push({ type: "CHOOSE_CORE_ACTION", playerId, action: "REPAIR_SHIP" });
+  }
+  if (moves.includes("careful_sail_1")) {
+    legal.push({ type: "CHOOSE_CORE_ACTION", playerId, action: "CAREFUL_SAIL_1" });
+  }
+  if (moves.includes("careful_sail_2")) {
+    legal.push({ type: "CHOOSE_CORE_ACTION", playerId, action: "CAREFUL_SAIL_2" });
   }
   if (moves.includes("end_turn")) {
     legal.push({ type: "CHOOSE_CORE_ACTION", playerId, action: "END_TURN" });
