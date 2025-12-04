@@ -181,6 +181,10 @@ interface RNG {
 This section contains the authoritative game rules.
 Codex must implement logic based solely on these definitions.
 
+5.0 Player Count
+
+The game supports 2–4 players. Game creation must reject player counts below 2 or above 4.
+
 5.1 Turn Flow
 
 The following sequence defines a turn:
@@ -463,7 +467,165 @@ Circe jump
 Full-turn tests
 
 ------------------------------------------------------------
-12. EXPANSION-FRIENDLINESS
+12. USER INTERFACE SPECIFICATION
+------------------------------------------------------------
+
+The engine now supports two complementary UI-oriented surfaces:
+
+- A deterministic, text-based auditing UI for console review that renders GameState summaries (current player, actions remaining, epic clock, deck counts, player status flags, path occupancy, and optional legal moves) and exposes a demo entry point that starts a 2-player game, begins a turn, and prints the snapshot to stdout.
+
+- A formal UI interaction contract that does **not** change any game rules. This supplement defines what the UI needs from the engine, how commands are expressed, and how to project a render-friendly view of state. All structures are additive and must never override the gameplay rules defined elsewhere.
+
+UI & INTERACTION LAYER SPEC (SUPPLEMENTAL — DOES NOT MODIFY GAME RULES)
+-----------------------------------------------------------------------
+
+This section defines how the future user interface will interact with the game logic. Codex must treat these instructions as UI-only and must not alter or reinterpret the existing game rules, move definitions, or core engine behavior defined elsewhere.
+
+These UI instructions only define:
+
+- What information the UI needs from the logic layer
+- How the UI will send commands to the logic layer
+- What shape the GameView projection takes
+- What inputs a user may provide
+- How the UI should interpret and present state
+
+No gameplay mechanics may be changed in this section.
+
+12.1 Purpose of this UI spec
+
+Codex must provide an abstraction layer between the game engine and any future UI (React, CLI, mobile, etc.). This layer must not include any UI code itself, but must provide clean, typed APIs that the UI can consume.
+
+The UI:
+- Runs in a local browser on a laptop.
+- Presents a minimal digital boardgame layout.
+- Has no hidden information or pass-the-device screens.
+- Shows the full journey path at all times (no scrolling).
+- Uses an action bar and tile clicks to select actions.
+- Uses a side panel for epic explanations (no modals).
+
+12.2 Board representation for UI
+
+Codex must make the logic engine capable of producing a "view model" that the UI can render easily.
+
+UI requires:
+
+- Full path of tiles (index, type, epic name if applicable)
+- Player tokens on tiles
+- Current player highlight
+- Damage and action counts
+- Currently active epic information
+- Optional peek information (when rules require it)
+- Game-over summary
+
+Codex must not add or modify game mechanics to fulfill this.
+
+12.3 UI <-> engine contract (strict)
+
+The UI may only interact with the engine through UiCommand objects.
+
+export type UiCommand =
+  | { type: "START_GAME"; playerNames: string[] }
+  | {
+      type: "CHOOSE_CORE_ACTION";
+      playerId: PlayerId;
+      action: "DRAW_SEA_CARD" | "REPAIR_SHIP" | "END_TURN";
+    }
+  | {
+      type: "RESOLVE_AEOLUS_MOVE";
+      playerId: PlayerId;
+      tilesToMove: 0 | 1 | 2 | 3;
+    }
+  | {
+      type: "ACKNOWLEDGE_EPIC";
+      playerId: PlayerId;
+      epicId: string;
+    };
+
+Codex must interpret these purely as UI commands, not game rules. Game logic remains defined elsewhere.
+
+12.4 GameView projection
+
+Codex must provide the UI with a derived view of the internal GameState. This projection must not change the underlying GameState shape.
+
+export interface GameView {
+  state: GameState;
+  currentPlayerId: PlayerId;
+  actionsRemaining: number;
+  damageByPlayer: Record<PlayerId, number>;
+
+  tiles: BoardTileView[];
+
+  activeEpic?: {
+    id: string;
+    name: string;
+    description: string;     // UI-friendly text
+    requiresChoice: boolean;
+    allowedAeolusMoves?: (0|1|2|3)[];
+  };
+
+  upcomingEpicPeek?: {
+    tiles: EpicPreviewTile[];
+  };
+
+  gameOver?: {
+    winnerPlayerId: PlayerId;
+  };
+}
+
+export interface BoardTileView {
+  id: string;
+  index: number;
+  type: "SEA" | "EPIC" | "START" | "ITHACA";
+  epicName?: string;
+  players: PlayerId[];
+}
+
+export interface EpicPreviewTile {
+  id: string;
+  index: number;
+  name: string;
+}
+
+Codex must keep GameView a pure, derived representation that does not alter rules.
+
+12.5 UI behavior requirements (no rule changes)
+
+Codex must support (but not implement UI code for):
+
+- Full horizontal board display
+- Colored circular player tokens
+- Tile click actions when required by commands
+- Big action buttons in an action bar
+- A static epic information panel (no modals)
+- No history logs are required
+- No hidden information
+- No pass-device screens
+
+These requirements influence only the shape of GameView and legal UI commands.
+
+12.6 Engine API surface
+
+Codex must expose the following engine API without altering the engine’s internal rules:
+
+interface GameEngineAPI {
+  initGame(playerNames: string[]): GameState;
+  getView(state: GameState): GameView;
+  getLegalCommands(state: GameState, playerId: PlayerId): UiCommand[];
+  applyCommand(state: GameState, command: UiCommand): GameState;
+}
+
+Codex must not modify game rules to satisfy UI needs.
+
+12.7 Modularity & safety requirements
+
+- This UI section shall never override or reinterpret gameplay.
+- All UI structures must be additive / supportive only.
+- No game logic may depend on UI layout choices.
+- No references to browser APIs, React, DOM, or rendering logic may appear in /src/game.
+- All UI-related code must remain in a separate folder if later implemented.
+
+------------------------------------------------------------
+13. EXPANSION-FRIENDLINESS
 ------------------------------------------------------------
 
 Codex must structure data so future expansions can add:
@@ -479,7 +641,7 @@ difficulty modes
 branching journey paths
 
 ------------------------------------------------------------
-13. PRIMARY CODING STANDARD
+14. PRIMARY CODING STANDARD
 ------------------------------------------------------------
 
 Codex must always:
@@ -497,7 +659,7 @@ Keep logic modular
 Ensure each file has a single purpose
 
 ------------------------------------------------------------
-14. WHAT CODEX SHOULD DO NEXT
+15. WHAT CODEX SHOULD DO NEXT
 ------------------------------------------------------------
 
 When asked:

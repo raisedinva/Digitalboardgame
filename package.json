@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "tsc --project tsconfig.json && node dist/game/tests/basic.test.js"
+    "build": "tsc --project tsconfig.json",
+    "test": "npm run build && node dist/game/tests/basic.test.js",
+    "ui:demo": "npm run build && node dist/ui/demo.js"
   }
 }
